@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="update-bestbuy-shipment-details" doc:id="890463a7-26d1-4964-8386-3d9d7927d20a" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="81c06d65-8aac-4c98-a866-4f9e27c7e34d" message="#['Started flow: ' ++ flow.name]" />
+		<ee:transform doc:name="Map request" doc:id="f5162e19-30ff-46c5-bbab-04a48b6aeea7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var orderBatchSize = Mule::p('bestbuy.orders.batchSize')
+var shopId = Mule::p('bestbuy.shopId')
+---
+{
+	queryParams: {
+		"shop_id": shopId
+	},
+	body: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Update Order Shipment" doc:id="36fa6a08-1287-41f5-8402-fab0245c47cd" path="${bestbuy.path.updateShipment}" config-ref="BestBuy_HTTPRequest_Config">
+			<http:body ><![CDATA[#[payload.body]]]></http:body>
+			<http:query-params ><![CDATA[#[%dw 2.0
+output application/json
+---
+payload.queryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="61c406d3-3ac4-4dab-bbcc-79b944ee0a99" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
+	<sub-flow name="fetch-bestbuy-orders" doc:id="6bb0facf-3a0e-467f-b1f6-bad96cdc799c" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="caaacef6-f234-4822-9879-cd5bf04aa951" message="#['Started flow: ' ++ flow.name]" />
+		<ee:transform doc:name="Map request" doc:id="73542788-e9e6-4df4-99e1-34c6a3f94145">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var orderBatchSize = Mule::p('bestbuy.orders.batchSize')
+var shopId = Mule::p('bestbuy.shopId')
+---
+{
+	queryParams: {
+		"start_date": vars.dateCursor,
+		"shop_id": shopId,
+		"max": orderBatchSize,
+		"offset": vars.offset default 0
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Fetch Orders" doc:id="a8e25831-6cfc-4b9b-a9bf-2f3154c01248" path="${bestbuy.path.fetchOrders}" config-ref="BestBuy_HTTPRequest_Config">
+			<http:query-params><![CDATA[#[%dw 2.0
+output application/json
+---
+payload.queryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="aa30d850-d9d3-4f3f-b0ac-a753f0689bb5" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
+	<sub-flow name="update-bestbuy-offer-inventory" doc:id="1da2a6f4-5005-4550-92b0-48a4cb82908f" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="7af18080-206c-49ea-80e9-87cb87b1bf94" message="#['Started flow: ' ++ flow.name]" />
+		<ee:transform doc:name="Map request" doc:id="0a5c0ac4-97b6-42cf-9106-6de5f1789c93">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var shopId = Mule::p('bestbuy.shopId')
+---
+{
+	queryParams: {
+		"shop_id": shopId
+	},
+	body: {
+		"offers": payload map ((offer) -> {
+			"shop_sku": offer.shop_sku,
+			"product-id-type": "SHOP_SKU",
+			"quantity": offer.quantity,
+			"price": offer.price,
+			"update_delete": "update"
+		})
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Update Inventory" doc:id="df27b69a-1173-47c6-a190-f95638b824a8" path="${bestbuy.path.updateInventory}" config-ref="BestBuy_HTTPRequest_Config">
+			<http:body ><![CDATA[#[payload.body]]]></http:body>
+			<http:query-params><![CDATA[#[%dw 2.0
+output application/json
+---
+payload.queryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="cc5642d4-3c87-45c1-b43e-fa054b4e70e7" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
+</mule>

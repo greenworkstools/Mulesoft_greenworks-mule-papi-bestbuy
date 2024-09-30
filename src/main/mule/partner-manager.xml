@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="post-orders-to-partner-manager" doc:id="ef50a9b7-15ca-405d-9f76-b5aaad4456ab" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="e7002eeb-7544-462b-98ec-6fb24e94aace" message="#['Started flow: ' ++ flow.name]" />
+		<http:request method="POST" doc:name="Post Orders" doc:id="ae080144-cdb8-48c4-b57d-a262a0045105" url="${partnerManager.postOrdersUrl}"/>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="8dc5c4a5-327d-43b6-b324-cce7cd9347c5" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
+</mule>

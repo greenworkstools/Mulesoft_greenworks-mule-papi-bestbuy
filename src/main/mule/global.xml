@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration doc:name="Configuration" doc:id="5256f94a-16af-452a-b203-e1fa87d25171" defaultErrorHandler-ref="global-error-handler" />
+	<configuration-properties doc:name="Configuration properties" doc:id="b77c6e26-9f7c-4bba-b88b-7da3e339d478" file="config/config-${mule.env}.yaml" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bc293df5-7ae3-4f56-975f-e137c679dc38" file="config/secure-config-${mule.env}.yaml" key="${mule.key}" />
+	<http:listener-config name="HTTPListener">
+        <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+            <tls:context>
+                <tls:key-store type="jks" path="server-keystore.jks" alias="mule-server" keyPassword="${secure::keystore.password}" password="${secure::keystore.password}" />
+            </tls:context>
+        </http:listener-connection>
+    </http:listener-config>
+	<os:object-store name="BestBuy_Cursor_Store" doc:name="Object store" doc:id="ca097bec-0331-4de6-9437-0cc8539c5049" config-ref="ObjectStore_Config" />
+	<http:request-config name="BestBuy_HTTPRequest_Config" doc:name="HTTP Request configuration" doc:id="38d69ac8-407c-4388-888d-9a5896c7f064" >
+		<http:request-connection protocol="HTTPS" host="${bestbuy.host}" />
+		<http:default-headers >
+			<http:default-header key="Authorization" value="${secure::bestbuy.apiKey}" />
+		</http:default-headers>
+	</http:request-config>
+	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="b7dca255-fffd-4ce8-94a2-0322a05d0b4b" >
+		<os:connection />
+	</os:config>
+	<error-handler name="global-error-handler" doc:id="94ed20c1-b029-49fa-9272-09fb5c16b045" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="14c10e1f-c54d-4b51-b7a0-76d4d180e593" type="ANY" >
+			<ee:transform doc:name="Map Error Payload" doc:id="3262fa38-b676-4e7d-b3d9-7062499f33f4" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	errorCode: (error.errorType.identifier ++ ":" ++ error.errorType.namespace) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: error.description,
+	transactionId: correlationId,
+	timeStamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="INFO" doc:name="Log Error" doc:id="b58fcb20-73f5-45e5-840f-1ff45f29bfbc" message="#[payload]" />
+		</on-error-propagate>
+	</error-handler>
+
+</mule>

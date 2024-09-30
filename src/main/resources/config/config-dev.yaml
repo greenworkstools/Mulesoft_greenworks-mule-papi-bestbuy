@@ -1,0 +1,17 @@
+api:
+  autoDiscoveryId: "19980167"
+
+bestbuy:
+  host: "bby-dev.mirakl.net"
+  shopId: "4382"
+  orders:
+    startDate: "2024-09-26T00:00:00Z"
+    batchSize: "100"
+  responseTimeout: "30000"
+  path: 
+    fetchOrders: "/api/orders"
+    updateShipment: "/api/shipments"
+    updateInventory: "/api/offers"
+
+partnerManager:
+  postOrdersUrl: "https://b2b-inbound-http-4b9l.us-e2.cloudhub.io:443/bbmporders/JSON-BBY-ORDERS"

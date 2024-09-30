@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="sync-bestbuy-orders" doc:id="357d677a-4a27-496b-9968-348828f2e6a1">
+		<scheduler doc:name="Scheduler" doc:id="c9ab764f-2efd-4297-a9e7-0c1ca2545950" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="3576d531-58d8-40c1-8c8b-91c7f0cf5ec1" message="#['Started flow: ' ++ flow.name]"/>
+		<os:retrieve doc:name="Retrieve Cursor Timestamp" doc:id="5263d7d3-e135-45a6-aa3b-f2e0e3af68a9" objectStore="BestBuy_Cursor_Store" key="orderTimestamp" target="dateCursor">
+			<os:default-value ><![CDATA[#[Mule::p('bestbuy.orders.startDate')]]]></os:default-value>
+		</os:retrieve>
+		<flow-ref doc:name="Get Total Orders" doc:id="9a590827-0ca2-4ef7-8ff8-43ad8f7165ad" name="fetch-bestbuy-orders" />
+		<ee:transform doc:name="Create Ranges, set current time" doc:id="b49fd148-b7c8-4ce3-94bb-8ce99b23f8de" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var orderBatchSize = Mule::p('bestbuy.orders.batchSize')
+---
+if(payload.total_count != 0)
+(0 to floor(payload.total_count / orderBatchSize))
+else []]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="currentTimestamp" ><![CDATA[%dw 2.0
+output application/json
+---
+now()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Check if new orders exist" doc:id="8493d4a6-70c0-4d59-b38f-d93de535091a" >
+			<when expression="#[!isEmpty(payload)]">
+				<foreach doc:name="For Each Page" doc:id="a3e5fa1c-b626-4e06-a9b5-f0c493829714" collection="#[payload]">
+			<flow-ref doc:name="fetch-bestbuy-orders" doc:id="08d3f283-b496-4c04-ba92-8c486e0c9b11" name="fetch-bestbuy-orders" />
+					<async doc:name="Async" doc:id="5ce6ac1c-82a1-49c5-8db7-06081f9a2168">
+						<foreach doc:name="For Each Order" doc:id="08b88ebe-8bcd-40ed-9e0e-68104e507bef" collection="#[payload.orders]">
+			<flow-ref doc:name="post-orders-to-partner-manager" doc:id="e7964d93-acc8-49f6-b13b-ecc8f6b3b148" name="post-orders-to-partner-manager" />
+		</foreach>
+			</async>
+			<set-variable value="#[%dw 2.0&#10;output application/json&#10;var orderBatchSize = Mule::p('bestbuy.orders.batchSize')&#10;---&#10;(vars.offset default 0) + orderBatchSize]" doc:name="Update Offset" doc:id="496860a2-c21d-4fa7-83d2-28fea8abc3b7" variableName="offset" />
+		</foreach>
+			</when>
+		</choice>
+		<os:store doc:name="Update Cursor Timestamp" doc:id="6ace5543-d35c-4fd3-a36f-82e9c87030d5" key="orderTimestamp" objectStore="BestBuy_Cursor_Store">
+			<os:value ><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.currentTimestamp]]]></os:value>
+		</os:store>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="6b30dd4d-6eed-4de2-9d4b-924afdf4873e" message="#['Flow Ended: ' ++ flow.name]"/>
+	</flow>
+</mule>
