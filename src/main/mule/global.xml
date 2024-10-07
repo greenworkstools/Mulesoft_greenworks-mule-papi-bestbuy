@@ -31,6 +31,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="b7dca255-fffd-4ce8-94a2-0322a05d0b4b" >
 		<os:connection />
 	</os:config>
+	<api-gateway:autodiscovery apiId="${api.autodiscoveryId}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="c407e1e1-173f-4124-a003-be035740e97b" flowRef="greenworks-mule-papi-bestbuy-main" />
 	<error-handler name="global-error-handler" doc:id="94ed20c1-b029-49fa-9272-09fb5c16b045" >
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="14c10e1f-c54d-4b51-b7a0-76d4d180e593" type="ANY" >
 			<ee:transform doc:name="Map Error Payload" doc:id="3262fa38-b676-4e7d-b3d9-7062499f33f4" >

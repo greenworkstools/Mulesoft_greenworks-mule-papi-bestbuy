@@ -1,5 +1,5 @@
 api:
-  autoDiscoveryId: "19980167"
+  autodiscoveryId: "19980167"
 
 bestbuy:
   host: "bby-dev.mirakl.net"

@@ -1,5 +1,5 @@
 api:
-  autoDiscoveryId: "19980225"
+  autodiscoveryId: "19980225"
 
 bestbuy:
   host: "marketplace.bestbuy.ca"
