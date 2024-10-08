@@ -13,7 +13,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<configuration doc:name="Configuration" doc:id="5256f94a-16af-452a-b203-e1fa87d25171" defaultErrorHandler-ref="global-error-handler" />
 	<configuration-properties doc:name="Configuration properties" doc:id="b77c6e26-9f7c-4bba-b88b-7da3e339d478" file="config/config-${mule.env}.yaml" />
-	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bc293df5-7ae3-4f56-975f-e137c679dc38" file="config/secure-config-${mule.env}.yaml" key="${mule.key}" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bc293df5-7ae3-4f56-975f-e137c679dc38" file="config/secure-config-${mule.env}.yaml" key="${mule.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
 	<http:listener-config name="HTTPListener">
         <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
             <tls:context>

@@ -22,6 +22,7 @@ var shopId = Mule::p('bestbuy.shopId')
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Log Request" doc:id="977ad3b9-2f7e-4598-8c3b-dafb170d348f" message="#[payload]"/>
 		<http:request method="POST" doc:name="Update Order Shipment" doc:id="36fa6a08-1287-41f5-8402-fab0245c47cd" path="${bestbuy.path.updateShipment}" config-ref="BestBuy_HTTPRequest_Config">
 			<http:body ><![CDATA[#[payload.body]]]></http:body>
 			<http:query-params ><![CDATA[#[%dw 2.0
@@ -50,12 +51,14 @@ var shopId = Mule::p('bestbuy.shopId')
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Log Request" doc:id="42c9c3a7-42a3-458d-bafd-dc19ac22df3e" message="#[payload]" />
 		<http:request method="GET" doc:name="Fetch Orders" doc:id="a8e25831-6cfc-4b9b-a9bf-2f3154c01248" path="${bestbuy.path.fetchOrders}" config-ref="BestBuy_HTTPRequest_Config">
 			<http:query-params><![CDATA[#[%dw 2.0
 output application/json
 ---
 payload.queryParams]]]></http:query-params>
 		</http:request>
+		<logger level="INFO" doc:name="Log Number of Orders Fetched" doc:id="c2da875d-5415-492f-bd9b-4e814a67d2c1" message="#[payload.total_count] Orders Fetched" />
 		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="aa30d850-d9d3-4f3f-b0ac-a753f0689bb5" message="#['Flow Ended: ' ++ flow.name]" />
 	</sub-flow>
 	<sub-flow name="update-bestbuy-offer-inventory" doc:id="1da2a6f4-5005-4550-92b0-48a4cb82908f" >
@@ -82,6 +85,7 @@ var shopId = Mule::p('bestbuy.shopId')
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Log Request" doc:id="fc8d0ed4-719c-4c7d-8175-2633ab8b139e" message="#[payload]" />
 		<http:request method="POST" doc:name="Update Inventory" doc:id="df27b69a-1173-47c6-a190-f95638b824a8" path="${bestbuy.path.updateInventory}" config-ref="BestBuy_HTTPRequest_Config">
 			<http:body ><![CDATA[#[payload.body]]]></http:body>
 			<http:query-params><![CDATA[#[%dw 2.0

@@ -54,5 +54,6 @@ output application/json
 vars.currentTimestamp]]]></os:value>
 		</os:store>
 		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="6b30dd4d-6eed-4de2-9d4b-924afdf4873e" message="#['Flow Ended: ' ++ flow.name]"/>
+		<error-handler ref="global-error-handler" />
 	</flow>
 </mule>
