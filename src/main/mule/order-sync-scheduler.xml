@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	<flow name="sync-bestbuy-orders" doc:id="357d677a-4a27-496b-9968-348828f2e6a1">
 		<scheduler doc:name="Scheduler" doc:id="c9ab764f-2efd-4297-a9e7-0c1ca2545950" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="10" timeUnit="MINUTES"/>
+				<fixed-frequency frequency="10" timeUnit="MINUTES" startDelay="60"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Log - Flow Started" doc:id="3576d531-58d8-40c1-8c8b-91c7f0cf5ec1" message="#['Started flow: ' ++ flow.name]"/>

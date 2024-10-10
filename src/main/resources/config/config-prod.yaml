@@ -14,4 +14,4 @@ bestbuy:
     updateInventory: "/api/offers"
 
 partnerManager:
-  postOrdersUrl: "https://b2b-inbound-http-4b9l.us-e2.cloudhub.io:443/bbmporders/JSON-BBY-ORDERS"
+  postOrdersUrl: "https://b2b-inbound-http-8y4p.us-e2.cloudhub.io:443/bbmporders/BBY-ORD-JSON"
