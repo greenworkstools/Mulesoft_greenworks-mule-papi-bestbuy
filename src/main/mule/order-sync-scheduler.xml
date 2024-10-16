@@ -38,7 +38,7 @@ now()]]></ee:set-variable>
 			<when expression="#[!isEmpty(payload)]">
 				<foreach doc:name="For Each Page" doc:id="a3e5fa1c-b626-4e06-a9b5-f0c493829714" collection="#[payload]">
 			<flow-ref doc:name="fetch-bestbuy-orders" doc:id="08d3f283-b496-4c04-ba92-8c486e0c9b11" name="fetch-bestbuy-orders" />
-					<async doc:name="Async" doc:id="5ce6ac1c-82a1-49c5-8db7-06081f9a2168">
+					<async doc:name="Async" doc:id="5ce6ac1c-82a1-49c5-8db7-06081f9a2168" maxConcurrency="4">
 						<foreach doc:name="For Each Order" doc:id="08b88ebe-8bcd-40ed-9e0e-68104e507bef" collection="#[payload.orders]">
 			<flow-ref doc:name="post-orders-to-partner-manager" doc:id="e7964d93-acc8-49f6-b13b-ecc8f6b3b148" name="post-orders-to-partner-manager" />
 		</foreach>
