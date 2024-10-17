@@ -38,12 +38,27 @@ now()]]></ee:set-variable>
 			<when expression="#[!isEmpty(payload)]">
 				<foreach doc:name="For Each Page" doc:id="a3e5fa1c-b626-4e06-a9b5-f0c493829714" collection="#[payload]">
 			<flow-ref doc:name="fetch-bestbuy-orders" doc:id="08d3f283-b496-4c04-ba92-8c486e0c9b11" name="fetch-bestbuy-orders" />
-					<async doc:name="Async" doc:id="5ce6ac1c-82a1-49c5-8db7-06081f9a2168" maxConcurrency="4">
-						<foreach doc:name="For Each Order" doc:id="08b88ebe-8bcd-40ed-9e0e-68104e507bef" collection="#[payload.orders]">
+					<ee:transform doc:name="Filter orders" doc:id="e991d7a8-c5f7-43fc-ba6d-ca262c47fbdf" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="ordersToSync" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.orders filter ((order) -> order.order_state == "SHIPPING")]]></ee:set-variable>
+							<ee:set-variable variableName="ordersToAccept" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.orders filter ((order) -> order.order_state == "WAITING_ACCEPTANCE")]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<foreach doc:name="For Each Order - Awaiting Shipment" doc:id="08b88ebe-8bcd-40ed-9e0e-68104e507bef" collection="#[vars.ordersToSync]">
 			<flow-ref doc:name="post-orders-to-partner-manager" doc:id="e7964d93-acc8-49f6-b13b-ecc8f6b3b148" name="post-orders-to-partner-manager" />
 		</foreach>
-			</async>
-			<set-variable value="#[%dw 2.0&#10;output application/json&#10;var orderBatchSize = Mule::p('bestbuy.orders.batchSize')&#10;---&#10;(vars.offset default 0) + orderBatchSize]" doc:name="Update Offset" doc:id="496860a2-c21d-4fa7-83d2-28fea8abc3b7" variableName="offset" />
+			<foreach doc:name="For Each Order - Pending Acceptance" doc:id="1476f796-3522-4d7b-b667-c1950d9ffc32" collection="#[vars.ordersToAccept]">
+							<flow-ref doc:name="post-orders-to-partner-manager" doc:id="95c3c265-a7e5-4301-8664-471f65c0c778" name="accept-bestbuy-order" />
+						</foreach>
+					<set-variable value="#[%dw 2.0&#10;output application/json&#10;var orderBatchSize = Mule::p('bestbuy.orders.batchSize')&#10;---&#10;(vars.offset default 0) + orderBatchSize]" doc:name="Update Offset" doc:id="496860a2-c21d-4fa7-83d2-28fea8abc3b7" variableName="offset" />
 		</foreach>
 			</when>
 		</choice>

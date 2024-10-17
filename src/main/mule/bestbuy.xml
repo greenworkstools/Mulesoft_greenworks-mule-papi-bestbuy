@@ -30,6 +30,7 @@ output application/json
 ---
 payload.queryParams]]]></http:query-params>
 		</http:request>
+		<logger level="INFO" doc:name="Log Response" doc:id="7da0ac32-d66f-4347-9d51-b369891a0e82" message="#[payload]"/>
 		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="61c406d3-3ac4-4dab-bbcc-79b944ee0a99" message="#['Flow Ended: ' ++ flow.name]" />
 	</sub-flow>
 	<sub-flow name="fetch-bestbuy-orders" doc:id="6bb0facf-3a0e-467f-b1f6-bad96cdc799c" >
@@ -43,7 +44,7 @@ var shopId = Mule::p('bestbuy.shopId')
 ---
 {
 	queryParams: {
-		"start_date": vars.dateCursor,
+		"start_update_date": vars.dateCursor,
 		"shop_id": shopId,
 		"max": orderBatchSize,
 		"offset": vars.offset default 0
@@ -93,6 +94,46 @@ output application/json
 ---
 payload.queryParams]]]></http:query-params>
 		</http:request>
+		<logger level="INFO" doc:name="Log Response" doc:id="d58d3ce3-808b-4a1e-9662-e13e01826a21" message="#[payload]" />
 		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="cc5642d4-3c87-45c1-b43e-fa054b4e70e7" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
+	<sub-flow name="accept-bestbuy-order" doc:id="bf0826f5-65a0-48f5-9dda-961a51ef73a4" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="93b124fe-5679-48a4-9bc5-4cf874f308f7" message="#['Started flow: ' ++ flow.name]" />
+		<ee:transform doc:name="Map request" doc:id="d526cedb-c555-4359-a10b-d2e3c701c463" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var shopId = Mule::p('bestbuy.shopId')
+---
+{
+	queryParams: {
+		"shop_id": shopId
+	},
+	uriParams: {
+		"orderId": payload.order_id
+	},
+	body: {
+		order_lines: payload.order_lines map ((item, index) -> {
+			"id": item.order_line_id,
+			"accepted": true
+		})
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Request" doc:id="3c429319-28c8-45e1-bead-e77a852b788b" message="#[payload]" />
+		<http:request method="PUT" doc:name="Update Order" doc:id="bf701077-2154-4bc2-a9da-e0e46f4dd709" config-ref="BestBuy_HTTPRequest_Config" path="${bestbuy.path.acceptOrders}" >
+			<http:body ><![CDATA[#[payload.body]]]></http:body>
+			<http:uri-params ><![CDATA[#[%dw 2.0
+output application/json
+---
+payload.uriParams]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[%dw 2.0
+output application/json
+---
+payload.queryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log Response" doc:id="dc2ce8f8-a106-472b-8e8d-773cf177ac40" message="#[payload]" />
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="f0085f6b-3b82-42db-8cea-9105b9321ad0" message="#['Flow Ended: ' ++ flow.name]" />
 	</sub-flow>
 </mule>
