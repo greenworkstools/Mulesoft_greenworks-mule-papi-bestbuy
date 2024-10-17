@@ -12,6 +12,6 @@ bestbuy:
     fetchOrders: "/api/orders"
     updateShipment: "/api/shipments"
     updateInventory: "/api/offers"
-
+    acceptOrders: "/api/orders/{orderId}/accept"
 partnerManager:
   postOrdersUrl: "https://b2b-inbound-http-8y4p.us-e2.cloudhub.io:443/bbmporders/BBY-ORD-JSON"
