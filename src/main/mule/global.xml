@@ -35,15 +35,17 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	</os:config>
 	<api-gateway:autodiscovery apiId="${api.autodiscoveryId}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="c407e1e1-173f-4124-a003-be035740e97b" flowRef="greenworks-mule-papi-bestbuy-main" />
 	<error-handler name="global-error-handler" doc:id="94ed20c1-b029-49fa-9272-09fb5c16b045" >
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="14c10e1f-c54d-4b51-b7a0-76d4d180e593" type="ANY" >
-			<ee:transform doc:name="Map Error Payload" doc:id="3262fa38-b676-4e7d-b3d9-7062499f33f4" >
+		<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="a73374f1-3f46-49dd-b0e5-eaad5793d72e" type="MULE:DUPLICATE_MESSAGE" >
+			<ee:transform doc:name="Map Error Payload" doc:id="ca134dfe-cdce-4697-a1da-8afc4a274335" >
 				<ee:message >
 					<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	errorCode: (error.errorType.identifier ++ ":" ++ error.errorType.namespace) default "MULE:INTERNAL_SERVER_ERROR",
-	errorMessage: error.description,
+	orderId: vars.orderId default "",
+	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: "Duplicate Order - Order with Id:" ++ (vars.orderId default "") ++ " already processed",
+	detailedDescription: error.errorMessage.payload default "",
 	transactionId: correlationId,
 	timeStamp: now()
 }]]></ee:set-payload>
@@ -52,8 +54,91 @@ output application/json
 					<ee:set-variable variableName="httpStatus" ><![CDATA[500]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
-			<logger level="INFO" doc:name="Log Error" doc:id="b58fcb20-73f5-45e5-840f-1ff45f29bfbc" message="#[payload]" />
+			<logger level="ERROR" doc:name="Log Error" doc:id="45303a74-0416-4c8d-8508-1d615f75ad43" message="#[payload]" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="7167aeac-86d5-4875-b3b0-3b9283e9d631" type="BESTBUY:INVENTORY_UPDATE_FAILED">
+			<ee:transform doc:name="Map Error Payload" doc:id="3262fa38-b676-4e7d-b3d9-7062499f33f4">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: error.description,
+	detailedDescription: error.errorMessage.payload default "",
+	transactionId: correlationId,
+	timeStamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="ERROR" doc:name="Log Error" doc:id="b58fcb20-73f5-45e5-840f-1ff45f29bfbc" message="#[payload]" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="8175e53a-ccee-4d3a-849a-c644af37d32c" type="BESTBUY:ACCEPT_ORDER_FAILED">
+			<ee:transform doc:name="Map Error Payload" doc:id="d3661107-5a5e-41e7-bc7c-29fdb88cd73f">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	orderId: vars.orderId default "",
+	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: error.description,
+	detailedDescription: error.errorMessage.payload default "",
+	transactionId: correlationId,
+	timeStamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="ERROR" doc:name="Log Error" doc:id="ed548570-6720-4832-85bb-b961de5247ca" message="#[payload]" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="cb3ca2ef-af32-4698-994e-cf795fc50045" type="BESTBUY:UPDATE_SHIPMENT_FAILED">
+			<ee:transform doc:name="Map Error Payload" doc:id="73b72697-d751-473a-8048-d455f953446c">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	orderId: vars.orderId default "",
+	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: error.description,
+	detailedDescription: error.errorMessage.payload default "",
+	transactionId: correlationId,
+	timeStamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="ERROR" doc:name="Log Error" doc:id="2cd7e432-f588-469d-af4c-444b4bed3044" message="#[payload]" />
+		</on-error-continue>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b6b01b4e-1196-4922-8419-f4bdd91404f8" >
+			<ee:transform doc:name="Map Error Payload" doc:id="5c291eb1-458b-4be6-ab0f-2274643f8eda" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	errorCode: (error.errorType.identifier ++ ":" ++ error.errorType.namespace) default "MULE:INTERNAL_SERVER_ERROR",
+	errorMessage: error.description,
+	detailedDescription: error.errorMessage.payload default "",
+	transactionId: correlationId,
+	timeStamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="httpStatus" ><![CDATA[500]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="ERROR" doc:name="Log Error" doc:id="a4e34c68-cd5d-4204-b4ba-3b12e3f479e4" message="#[payload]" />
 		</on-error-propagate>
+		
 	</error-handler>
 
 </mule>
