@@ -53,10 +53,29 @@ payload.orders filter ((order) -> order.order_state == "WAITING_ACCEPTANCE")]]><
 						</ee:variables>
 					</ee:transform>
 					<foreach doc:name="For Each Order - Awaiting Shipment" doc:id="08b88ebe-8bcd-40ed-9e0e-68104e507bef" collection="#[vars.ordersToSync]">
-			<flow-ref doc:name="post-orders-to-partner-manager" doc:id="e7964d93-acc8-49f6-b13b-ecc8f6b3b148" name="post-orders-to-partner-manager" />
+						<try doc:name="Try" doc:id="b474fe17-c3fe-4dd2-810f-cbb70687f76c" >
+							<ee:transform doc:name="Set Order ID" doc:id="092b3b62-9cd1-41f7-b4aa-efdfe0133563" >
+								<ee:message >
+								</ee:message>
+								<ee:variables >
+									<ee:set-variable variableName="orderId" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.order_id]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+							<idempotent-message-validator doc:name="Idempotent Message Validator" doc:id="7a2941b6-087b-407b-8187-73a418b7aea8" idExpression="#[vars.orderId]">
+								<os:private-object-store entryTtl="10" entryTtlUnit="HOURS" expirationInterval="2" expirationIntervalUnit="HOURS" config-ref="ObjectStore_Config" alias="OrderIdempotentStore"/>
+							</idempotent-message-validator>
+							<flow-ref doc:name="post-orders-to-partner-manager" doc:id="2108fc55-6caa-4bbf-8fc7-b187cc947a6e" name="post-orders-to-partner-manager" />
+							<error-handler ref="global-error-handler" />
+						</try>
 		</foreach>
 			<foreach doc:name="For Each Order - Pending Acceptance" doc:id="1476f796-3522-4d7b-b667-c1950d9ffc32" collection="#[vars.ordersToAccept]">
-							<flow-ref doc:name="post-orders-to-partner-manager" doc:id="95c3c265-a7e5-4301-8664-471f65c0c778" name="accept-bestbuy-order" />
+						<try doc:name="Try" doc:id="21095bdb-ae62-4cff-997b-267e61fd6db7" >
+							<flow-ref doc:name="accept-bestbuy-order" doc:id="95c3c265-a7e5-4301-8664-471f65c0c778" name="accept-bestbuy-order" />
+							<error-handler ref="global-error-handler" />
+						</try>
 						</foreach>
 					<set-variable value="#[%dw 2.0&#10;output application/json&#10;var orderBatchSize = Mule::p('bestbuy.orders.batchSize')&#10;---&#10;(vars.offset default 0) + orderBatchSize]" doc:name="Update Offset" doc:id="496860a2-c21d-4fa7-83d2-28fea8abc3b7" variableName="offset" />
 		</foreach>
