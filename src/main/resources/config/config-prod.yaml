@@ -15,3 +15,7 @@ bestbuy:
     acceptOrders: "/api/orders/{orderId}/accept"
 partnerManager:
   postOrdersUrl: "https://b2b-inbound-http-8y4p.us-e2.cloudhub.io:443/bbmporders/BBY-ORD-JSON"
+  
+cloudhub:
+  notification:
+    environment: "da025338-8775-4007-b187-ded0e2cc40de"

@@ -4,7 +4,7 @@
 
 	<groupId>ea4d5803-1d3e-458c-9054-8d2bda511bef</groupId>
 	<artifactId>greenworks-mule-papi-bestbuy</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>mule-application</packaging>
 
 	<name>greenworks-mule-papi-bestbuy</name>
@@ -96,6 +96,12 @@
 			<version>1.0.1</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.connectors</groupId>
+			<artifactId>mule-cloudhub-connector</artifactId>
+			<version>1.2.0</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 	<distributionManagement>

@@ -16,6 +16,9 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="bc293df5-7ae3-4f56-975f-e137c679dc38" file="config/secure-config-${mule.env}.yaml" key="${mule.key}" >
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
+	<cloudhub:config name="CloudHub_Config" doc:name="CloudHub Config" doc:id="7e0bd07a-5fec-45b5-96c2-f72fc330ccb0">
+		<cloudhub:oauth-client-credentials-connection clientSecret="${secure::cloudhub.notification.client_secret}" clientId="${secure::cloudhub.notification.client_id}" environment="${cloudhub.notification.environment}"/>
+	</cloudhub:config>
 	<http:listener-config name="HTTPListener">
         <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
             <tls:context>
@@ -98,24 +101,49 @@ output application/json
 			<logger level="ERROR" doc:name="Log Error" doc:id="ed548570-6720-4832-85bb-b961de5247ca" message="#[payload]" />
 		</on-error-continue>
 		<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="cb3ca2ef-af32-4698-994e-cf795fc50045" type="BESTBUY:UPDATE_SHIPMENT_FAILED">
+			<set-variable value="500" doc:name="Set Variable httpStatus" doc:id="b969c722-134f-44a2-b994-dba7ff4dc2d9" variableName="httpStatus" />
 			<ee:transform doc:name="Map Error Payload" doc:id="73b72697-d751-473a-8048-d455f953446c">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-{
-	orderId: vars.orderId default "",
-	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
-	errorMessage: error.description,
-	detailedDescription: error.errorMessage.payload default "",
+payload.shipment_errors map ({
 	transactionId: correlationId,
-	timeStamp: now()
-}]]></ee:set-payload>
+	orderId: $.order_id default vars.orderId,
+	errorCode: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "MULE:INTERNAL_SERVER_ERROR",
+	errorDateTime: now(),
+	errorMessage: error.description,
+	detailedDescription: $.message default "", 
+})]]></ee:set-payload>
 				</ee:message>
 				<ee:variables>
 					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
 				</ee:variables>
 			</ee:transform>
+			<async doc:name="Async" doc:id="d2c08cd0-2205-43b3-aea9-7c6fa84065ce" >
+				<foreach doc:name="For Each Shipment Error" doc:id="1334bb93-97cc-4227-a6b7-7b8be1e93326" collection="#[payload]">
+					<ee:transform doc:name="Map Notification Msg" doc:id="b5db19ec-1918-41f7-b3c1-3e7252603815">
+			<ee:message>
+			</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="notificationMsg"><![CDATA["BestBuy - Shipment Tracking Update Failed"]]></ee:set-variable>
+						<ee:set-variable variableName="customProperties"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	transactionId: payload.transactionId,
+	subject: "Alert: BestBuy Shipment Tracking Error",
+	orderId: payload.orderId,
+	errorDateTime: payload.errorDateTime,
+	errorDescription: payload.detailedDescription,
+	sourceSystem: "SAP",
+	targetSystem: "BestBuy Marketplace" 
+}]]></ee:set-variable>
+					</ee:variables>
+		</ee:transform>
+					<flow-ref doc:name="send-cloudhub-notification-subflow" doc:id="f0c249bd-2c1f-451a-9764-0f56df51a3ab" name="send-cloudhub-notification-subflow" />
+				</foreach>
+			</async>
 			<logger level="ERROR" doc:name="Log Error" doc:id="2cd7e432-f588-469d-af4c-444b4bed3044" message="#[payload]" />
 		</on-error-continue>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b6b01b4e-1196-4922-8419-f4bdd91404f8" >
@@ -140,5 +168,13 @@ output application/json
 		</on-error-propagate>
 		
 	</error-handler>
+	<sub-flow name="send-cloudhub-notification-subflow" doc:id="4117f9b7-f2c1-4985-afb1-4e042f67f51f" >
+		<logger level="INFO" doc:name="Log - Flow Started" doc:id="3d329443-4abb-4b65-9f1a-acbddd299550" message="#['Started flow: ' ++ flow.name]" />
+		<cloudhub:create-notification domain="${application.name}" doc:name="Create Notification" doc:id="75d42c43-9258-46c2-a85c-4ca037de7560" config-ref="CloudHub_Config" priority="ERROR" transactionId="#[correlationId]">
+				<cloudhub:message><![CDATA[#[vars.notificationMsg]]]></cloudhub:message>
+				<cloudhub:custom-properties><![CDATA[#[vars.customProperties]]]></cloudhub:custom-properties>
+			</cloudhub:create-notification>
+		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="8ad20e1e-6e6e-4691-9642-a99f121115ba" message="#['Flow Ended: ' ++ flow.name]" />
+	</sub-flow>
 
 </mule>

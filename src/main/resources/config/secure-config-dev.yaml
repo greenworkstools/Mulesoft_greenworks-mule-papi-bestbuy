@@ -3,3 +3,8 @@ bestbuy:
 
 keystore:
   password: "![rqvtTL17O30e8TovFXGRzQ==]"
+
+cloudhub:
+  notification:
+    client_id: "![uacR5Drc7NSlty9uoSF0r4Y/n2jUeD3XojKArZrCeZEvQTjE371rJg==]"
+    client_secret: "![RkXcYhcy8GtBUs8TlenvfPsAdbnAtVcur04MnyKaKVIY5P2Jvl7Now==]"
