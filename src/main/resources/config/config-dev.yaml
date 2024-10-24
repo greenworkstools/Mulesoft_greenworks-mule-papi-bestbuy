@@ -1,3 +1,6 @@
+application:
+  name: "greenworks-mule-papi-bestbuy-dev"
+
 api:
   autodiscoveryId: "19980167"
 
@@ -15,3 +18,7 @@ bestbuy:
     acceptOrders: "/api/orders/{orderId}/accept"
 partnerManager:
   postOrdersUrl: "https://b2b-inbound-http-4b9l.us-e2.cloudhub.io:443/bbmporders/JSON-BBY-ORDERS"
+  
+cloudhub:
+  notification:
+    environment: "4ec83105-560e-4468-bb3a-a6fbd1d564b9"

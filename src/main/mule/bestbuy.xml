@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
 	<sub-flow name="update-bestbuy-shipment-details" doc:id="890463a7-26d1-4964-8386-3d9d7927d20a" >
 		<logger level="INFO" doc:name="Log - Flow Started" doc:id="81c06d65-8aac-4c98-a866-4f9e27c7e34d" message="#['Started flow: ' ++ flow.name]" />
 		<ee:transform doc:name="Map request and Set var orderId" doc:id="f5162e19-30ff-46c5-bbab-04a48b6aeea7" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
-var orderBatchSize = Mule::p('bestbuy.orders.batchSize')
 var shopId = Mule::p('bestbuy.shopId')
 ---
 {
@@ -37,7 +37,12 @@ output application/json
 ---
 payload.queryParams]]]></http:query-params>
 		</http:request>
-		<logger level="INFO" doc:name="Log Response" doc:id="7da0ac32-d66f-4347-9d51-b369891a0e82" message="#[payload]"/>
+		<logger level="INFO" doc:name="Log Response" doc:id="74180532-d512-4781-abaf-fbd350d80396" message="#[payload]" />
+		<choice doc:name="Check if update success" doc:id="658768dc-de38-4bb7-9524-93aa241aabec" >
+			<when expression="#[!isEmpty(payload.shipment_errors)]">
+				<raise-error doc:name="Raise error - UPDATE_SHIPMENT_FAILED" doc:id="de75313c-3904-4fdd-91eb-4031745458b9" type="BESTBUY:UPDATE_SHIPMENT_FAILED" description="Shipment Tracking Update Failed"/>
+			</when>
+		</choice>
 		<logger level="INFO" doc:name="Log - Flow Ended" doc:id="61c406d3-3ac4-4dab-bbcc-79b944ee0a99" message="#['Flow Ended: ' ++ flow.name]" />
 	</sub-flow>
 	<sub-flow name="fetch-bestbuy-orders" doc:id="6bb0facf-3a0e-467f-b1f6-bad96cdc799c" >
